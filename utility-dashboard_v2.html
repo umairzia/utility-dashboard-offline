@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Provident Utility Dashboard</title>
+<style>
+:root {
+  --bg:#0d1117; --s1:#161b22; --s2:#21262d; --border:#30363d;
+  --text:#e6edf3; --text2:#8b949e; --text3:#4b5563;
+  --blue:#58a6ff; --green:#3fb950; --orange:#f78166;
+  --yellow:#d29922; --red:#f85149; --purple:#a5a0fb; --teal:#39d353;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;min-height:100vh;font-size:14px;line-height:1.5;}
+
+/* ---- SCREENS ---- */
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;}
+#screen-upload{flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem;}
+#screen-processing{flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem;}
+#screen-dashboard{flex-direction:column;padding:0;}
+
+/* ---- UPLOAD ---- */
+.upload-logo{font-size:2.5rem;margin-bottom:.75rem;filter:drop-shadow(0 0 20px rgba(88,166,255,.3));}
+.upload-h1{font-size:1.6rem;font-weight:700;letter-spacing:-.03em;margin-bottom:.4rem;}
+.upload-sub{color:var(--text2);font-size:.9rem;text-align:center;max-width:420px;margin-bottom:2.5rem;line-height:1.6;}
+.dropzone{
+  border:2px dashed var(--border);border-radius:14px;
+  padding:2.5rem 3rem;text-align:center;cursor:pointer;
+  transition:border-color .2s,background .2s;max-width:480px;width:100%;margin-bottom:1.25rem;
+  background:var(--s1);
+}
+.dropzone:hover,.dropzone.drag-over{border-color:var(--blue);background:rgba(88,166,255,.05);}
+.dz-icon{font-size:2rem;margin-bottom:.75rem;opacity:.6;}
+.dz-primary{font-weight:600;font-size:.95rem;margin-bottom:.3rem;}
+.dz-secondary{color:var(--text2);font-size:.825rem;}
+.dz-secondary em{color:var(--blue);font-style:normal;}
+#file-input{display:none;}
+
+.file-list{max-width:480px;width:100%;margin-bottom:1.25rem;}
+.file-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 13px;background:var(--s1);border:1px solid var(--border);
+  border-radius:8px;margin-bottom:7px;
+}
+.fi-icon{color:var(--orange);font-size:1rem;flex-shrink:0;}
+.fi-name{flex:1;font-size:.825rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text);}
+.fi-size{color:var(--text2);font-size:.75rem;flex-shrink:0;}
+.fi-rm{background:none;border:none;color:var(--text3);cursor:pointer;font-size:1rem;padding:2px 5px;border-radius:4px;transition:color .15s,background .15s;}
+.fi-rm:hover{color:var(--red);background:rgba(248,81,73,.1);}
+
+.ready-box{max-width:480px;width:100%;text-align:center;padding:1.5rem;background:var(--s1);border:1px solid var(--border);border-radius:12px;}
+.ready-title{font-size:1rem;font-weight:600;margin-bottom:.4rem;}
+.ready-sub{color:var(--text2);font-size:.85rem;margin-bottom:1.25rem;}
+.btn-start{
+  background:var(--green);color:#0d1117;border:none;
+  padding:13px 36px;border-radius:8px;font-size:.95rem;font-weight:700;
+  cursor:pointer;transition:opacity .15s,transform .15s;letter-spacing:-.01em;
+}
+.btn-start:hover{opacity:.9;transform:translateY(-1px);}
+.btn-start:active{transform:translateY(0);}
+
+/* ---- PROCESSING ---- */
+.proc-title{font-size:1.3rem;font-weight:700;margin-bottom:.3rem;letter-spacing:-.02em;}
+.proc-sub{color:var(--text2);font-size:.875rem;margin-bottom:2rem;}
+.prog-wrap{max-width:380px;width:100%;height:5px;background:var(--s2);border-radius:3px;overflow:hidden;margin-bottom:2rem;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--teal));border-radius:3px;transition:width .5s ease;width:0%;}
+.proc-files{max-width:380px;width:100%;}
+.proc-file{display:flex;align-items:center;gap:10px;padding:7px 0;font-size:.825rem;}
+.pf-dot{width:18px;height:18px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;}
+.pf-dot.wait{background:var(--s2);color:var(--text3);}
+.pf-dot.run{background:var(--blue);animation:blink 1s infinite;}
+.pf-dot.ok{background:var(--green);color:#0d1117;}
+.pf-dot.err{background:var(--red);color:#fff;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.pf-name{flex:1;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.pf-name.run{color:var(--text);}
+.pf-status{color:var(--text3);font-size:.75rem;flex-shrink:0;}
+
+/* ---- DASHBOARD ---- */
+.dash-inner{max-width:980px;margin:0 auto;padding:1.5rem 1.25rem 3rem;}
+.dash-topbar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem;}
+.dash-titles .h1{font-size:1.35rem;font-weight:700;letter-spacing:-.03em;}
+.dash-titles .h2{color:var(--text2);font-size:.8rem;margin-top:3px;}
+.btn-back{background:none;border:1px solid var(--border);color:var(--text2);padding:7px 15px;border-radius:7px;font-size:.8rem;cursor:pointer;transition:border-color .2s,color .2s;font-family:inherit;}
+.btn-back:hover{border-color:var(--blue);color:var(--blue);}
+
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:1.25rem;}
+.mc{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:.9rem 1rem;}
+.mc-label{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;font-weight:500;}
+.mc-val{font-size:1.5rem;font-weight:700;color:var(--text);letter-spacing:-.04em;line-height:1.1;}
+.mc-sub{font-size:10px;color:var(--text3);margin-top:3px;}
+
+.card{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:1.1rem 1.25rem;margin-bottom:1.1rem;}
+.card-title{font-size:.825rem;font-weight:600;color:var(--text);margin-bottom:.15rem;}
+.card-sub{font-size:.75rem;color:var(--text2);margin-bottom:.9rem;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-bottom:1.1rem;}
+@media(max-width:600px){.two-col{grid-template-columns:1fr;}}
+
+svg text{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;}
+
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:.6rem;}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);}
+.leg-sq{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:.775rem;}
+thead th{color:var(--text2);font-weight:500;text-align:left;padding:7px 9px;border-bottom:1px solid var(--border);font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+tbody td{padding:7px 9px;border-bottom:1px solid rgba(48,54,61,.5);color:var(--text);}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:rgba(255,255,255,.025);}
+.r{text-align:right;font-variant-numeric:tabular-nums;}
+.peak td{color:var(--yellow)!important;}
+.low td{color:var(--green)!important;}
+
+.insights-wrap{margin-top:.2rem;}
+.insight{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid rgba(48,54,61,.6);}
+.insight:last-child{border-bottom:none;}
+.i-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+.i-text{font-size:.825rem;color:var(--text2);line-height:1.6;}
+.i-text strong{color:var(--text);font-weight:500;}
+
+.err-banner{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.25);border-radius:8px;padding:10px 14px;font-size:.8rem;color:var(--red);margin-bottom:1rem;}
+.empty{color:var(--text2);font-size:.875rem;text-align:center;padding:2rem;}
+</style>
+</head>
+<body>
+
+<!-- UPLOAD SCREEN -->
+<div id="screen-upload" class="screen active">
+  <div class="upload-logo">⚡</div>
+  <h1 class="upload-h1">Utility Bill Dashboard</h1>
+  <p class="upload-sub">Upload your Provident eBill PDFs to build a fully offline, interactive usage and cost breakdown. No internet required — ever.</p>
+
+  <div class="dropzone" id="dropzone">
+    <input type="file" id="file-input" accept=".pdf" multiple>
+    <div class="dz-icon">📄</div>
+    <p class="dz-primary">Drop your PDF bills here</p>
+    <p class="dz-secondary">or <em>click to browse files</em></p>
+  </div>
+
+  <div class="file-list" id="file-list"></div>
+
+  <div id="ready-box" class="ready-box" style="display:none;">
+    <div class="ready-title" id="ready-title"></div>
+    <div class="ready-sub">All files are queued locally — nothing is uploaded anywhere.</div>
+    <button class="btn-start" id="btn-start">✓ Ready to begin?</button>
+  </div>
+</div>
+
+<!-- PROCESSING SCREEN -->
+<div id="screen-processing" class="screen">
+  <div class="proc-title">Analysing your bills…</div>
+  <div class="proc-sub" id="proc-sub">Reading PDF data</div>
+  <div class="prog-wrap"><div class="prog-fill" id="prog-fill"></div></div>
+  <div class="proc-files" id="proc-files"></div>
+</div>
+
+<!-- DASHBOARD SCREEN -->
+<div id="screen-dashboard" class="screen">
+  <div class="dash-inner">
+    <div class="dash-topbar">
+      <div class="dash-titles">
+        <div class="h1">Utility Dashboard</div>
+        <div class="h2" id="dash-sub"></div>
+      </div>
+      <button class="btn-back" id="btn-back">↩ Upload more bills</button>
+    </div>
+    <div id="err-wrap"></div>
+    <div class="metrics" id="metrics"></div>
+    <div class="card" id="chart-monthly"></div>
+    <div class="two-col" id="charts-row"></div>
+    <div class="card" id="tbl-card"></div>
+    <div class="card" id="insights-card"></div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   STATE
+   ============================================================ */
+let queued = [];
+let parsed = [];
+
+/* ============================================================
+   SCREEN SWITCHING
+   ============================================================ */
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ============================================================
+   UPLOAD UI
+   ============================================================ */
+const dz = document.getElementById('dropzone');
+const fi = document.getElementById('file-input');
+
+dz.addEventListener('click', () => fi.click());
+fi.addEventListener('change', e => addFiles([...e.target.files]));
+dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+dz.addEventListener('drop', e => {
+  e.preventDefault(); dz.classList.remove('drag-over');
+  addFiles([...e.dataTransfer.files].filter(f => f.name.toLowerCase().endsWith('.pdf')));
+});
+
+function addFiles(files) {
+  files.forEach(f => { if (!queued.find(q => q.name === f.name)) queued.push(f); });
+  renderQueue();
+}
+
+function removeFile(name) {
+  queued = queued.filter(f => f.name !== name);
+  renderQueue();
+}
+window.removeFile = removeFile;
+
+function renderQueue() {
+  const fl = document.getElementById('file-list');
+  fl.innerHTML = queued.map(f => `
+    <div class="file-item">
+      <span class="fi-icon">📄</span>
+      <span class="fi-name" title="${esc(f.name)}">${esc(f.name)}</span>
+      <span class="fi-size">${(f.size/1024).toFixed(0)} KB</span>
+      <button class="fi-rm" onclick="removeFile('${esc(f.name).replace(/'/g,"\\'")}')">✕</button>
+    </div>`).join('');
+
+  const rb = document.getElementById('ready-box');
+  const rt = document.getElementById('ready-title');
+  if (queued.length > 0) {
+    rb.style.display = 'block';
+    rt.textContent = `${queued.length} bill${queued.length > 1 ? 's' : ''} ready to process`;
+  } else {
+    rb.style.display = 'none';
+  }
+}
+
+document.getElementById('btn-start').addEventListener('click', startProcessing);
+document.getElementById('btn-back').addEventListener('click', () => { queued = []; renderQueue(); show('screen-upload'); });
+
+/* ============================================================
+   PDF PARSING — handles CID fonts via ToUnicode CMap
+   No external libraries — uses browser DecompressionStream API
+   ============================================================ */
+async function inflateBytes(bytes) {
+  for (const fmt of ['deflate', 'deflate-raw']) {
+    try {
+      const ds = new DecompressionStream(fmt);
+      const w = ds.writable.getWriter();
+      w.write(bytes); w.close();
+      const buf = await new Response(ds.readable).arrayBuffer();
+      return new Uint8Array(buf);
+    } catch(_) {}
+  }
+  return null;
+}
+
+function u8ToLatin1(u8) {
+  let s = '';
+  const CHUNK = 8192;
+  for (let i = 0; i < u8.length; i += CHUNK) {
+    s += String.fromCharCode.apply(null, u8.subarray(i, Math.min(i + CHUNK, u8.length)));
+  }
+  return s;
+}
+
+async function extractPDFText(buf) {
+  const uint8 = new Uint8Array(buf);
+  const latin1 = u8ToLatin1(uint8);
+
+  // Index all indirect objects
+  const objs = {};
+  const objRe = /(\d+)\s+0\s+obj\b/g;
+  let m;
+  while ((m = objRe.exec(latin1)) !== null) {
+    const objNum = parseInt(m[1]);
+    const start = m.index + m[0].length;
+    const endIdx = latin1.indexOf('endobj', start);
+    if (endIdx > 0) objs[objNum] = { body: latin1.slice(start, endIdx), start };
+  }
+
+  // Stream extractor — uses /Length from dict, reads absolute bytes for inflation
+  async function getStream(objNum) {
+    const obj = objs[objNum];
+    if (!obj) return null;
+    const body = obj.body;
+    const sm = body.match(/\bstream\r?\n/);
+    if (!sm) return null;
+    const dataStart = sm.index + sm[0].length;
+    const lenM = body.slice(0, sm.index).match(/\/Length\s+(\d+)/);
+    let dataEnd;
+    if (lenM) dataEnd = dataStart + parseInt(lenM[1]);
+    else {
+      const esi = body.indexOf('endstream', dataStart);
+      dataEnd = esi !== -1 ? esi : dataStart + 200000;
+    }
+    const rawBytes = uint8.slice(obj.start + dataStart, obj.start + dataEnd);
+    const inflated = await inflateBytes(rawBytes);
+    return inflated ? u8ToLatin1(inflated) : null;
+  }
+
+  // Parse ToUnicode CMap streams
+  const cmaps = {};
+  for (const objNumStr of Object.keys(objs)) {
+    const stream = await getStream(parseInt(objNumStr));
+    if (!stream) continue;
+    if (!stream.includes('beginbfchar') && !stream.includes('beginbfrange')) continue;
+    const cmap = new Map();
+    let x;
+    const bcRe = /beginbfchar([\s\S]*?)endbfchar/g;
+    while ((x = bcRe.exec(stream)) !== null) {
+      const pairRe = /<([\da-fA-F]+)>\s*<([\da-fA-F]+)>/g;
+      let p;
+      while ((p = pairRe.exec(x[1])) !== null) {
+        cmap.set(parseInt(p[1], 16), String.fromCharCode(parseInt(p[2], 16)));
+      }
+    }
+    const brRe = /beginbfrange([\s\S]*?)endbfrange/g;
+    while ((x = brRe.exec(stream)) !== null) {
+      const rowRe = /<([\da-fA-F]+)>\s*<([\da-fA-F]+)>\s*<([\da-fA-F]+)>/g;
+      let r;
+      while ((r = rowRe.exec(x[1])) !== null) {
+        const lo = parseInt(r[1], 16), hi = parseInt(r[2], 16), base = parseInt(r[3], 16);
+        for (let i = 0; i <= hi - lo; i++) cmap.set(lo + i, String.fromCharCode(base + i));
+      }
+    }
+    cmaps[parseInt(objNumStr)] = cmap;
+  }
+
+  // Map font resource names (e.g., /9, /a) to their CMaps
+  const fontToCmap = {};
+  const fontDictRe = /\/Font\s*<<([\s\S]*?)>>/g;
+  let fdm;
+  while ((fdm = fontDictRe.exec(latin1)) !== null) {
+    const refRe = /\/(\w+)\s+(\d+)\s+0\s+R/g;
+    let rm;
+    while ((rm = refRe.exec(fdm[1])) !== null) {
+      const fontName = rm[1];
+      const fontObjNum = parseInt(rm[2]);
+      if (objs[fontObjNum]) {
+        const tuM = objs[fontObjNum].body.match(/\/ToUnicode\s+(\d+)\s+0\s+R/);
+        if (tuM) {
+          const tuObj = parseInt(tuM[1]);
+          if (cmaps[tuObj]) fontToCmap[fontName] = cmaps[tuObj];
+        }
+      }
+    }
+  }
+
+  // Decode a PDF literal string through the active font's CMap
+  function decodeString(s, cmap) {
+    const bytes = [];
+    let i = 0;
+    while (i < s.length) {
+      const c = s[i];
+      if (c === '\\' && i + 1 < s.length) {
+        const nx = s[i + 1];
+        if (nx === '(' || nx === ')' || nx === '\\') { bytes.push(nx.charCodeAt(0)); i += 2; }
+        else if (nx === 'n') { bytes.push(10); i += 2; }
+        else if (nx === 'r') { bytes.push(13); i += 2; }
+        else if (nx === 't') { bytes.push(9); i += 2; }
+        else if (nx >= '0' && nx <= '7') {
+          let j = i + 1, o = '';
+          while (j < s.length && j < i + 4 && s[j] >= '0' && s[j] <= '7') { o += s[j]; j++; }
+          if (o) { bytes.push(parseInt(o, 8) & 0xff); i = j; } else i += 2;
+        } else i += 2;
+      } else {
+        bytes.push(s.charCodeAt(i) & 0xff);
+        i++;
+      }
+    }
+    let out = '';
+    for (const b of bytes) out += cmap.get(b) || '';
+    return out;
+  }
+
+  // Walk content streams, tracking the active font, decoding all Tj/TJ text
+  const extracted = [];
+  for (const objNumStr of Object.keys(objs)) {
+    const stream = await getStream(parseInt(objNumStr));
+    if (!stream) continue;
+    if (stream.includes('beginbfchar') || stream.includes('beginbfrange')) continue;
+    if (!stream.includes('Tj') && !stream.includes('TJ')) continue;
+
+    let currentCmap = null;
+    const tokRe = /\/(\w+)\s+[\d.]+\s+Tf|\(((?:\\.|[^\\()])*)\)\s*Tj|\[((?:\\.|[^\\\]])*)\]\s*TJ|\b(Td|TD|Tm|T\*)/g;
+    let tm;
+    while ((tm = tokRe.exec(stream)) !== null) {
+      if (tm[1]) currentCmap = fontToCmap[tm[1]] || null;
+      else if (tm[2] !== undefined) { if (currentCmap) extracted.push(decodeString(tm[2], currentCmap)); }
+      else if (tm[3] !== undefined) {
+        if (currentCmap) {
+          const sRe = /\(((?:\\.|[^\\()])*)\)/g;
+          let sm2;
+          while ((sm2 = sRe.exec(tm[3])) !== null) extracted.push(decodeString(sm2[1], currentCmap));
+        }
+      } else if (tm[4]) extracted.push(' ');
+    }
+    extracted.push('\n');
+  }
+  return extracted.join('');
+}
+
+/* ============================================================
+   PROVIDENT BILL PARSER
+   ============================================================ */
+function parseBill(rawText, filename) {
+  const t = rawText.replace(/\s+/g, ' ');
+  const bill = { filename };
+
+  const match = (patterns) => {
+    for (const p of patterns) {
+      const m = t.match(p);
+      if (m) return m;
+    }
+    return null;
+  };
+  const num = (patterns) => {
+    const m = match(patterns);
+    return m ? parseFloat(m[1].replace(/,/g, '')) : null;
+  };
+  const str = (patterns) => {
+    const m = match(patterns);
+    return m ? m[1].trim() : null;
+  };
+
+  // Total
+  bill.total = num([
+    /Total Amount Due By [A-Za-z]+ \d+,? \d{4}\s*\$?\s*([\d,]+\.?\d*)/i,
+    /NET AMOUNT DUE\s+([\d,]+\.?\d*)/i,
+  ]);
+
+  // Statement date (bottom section: MEMO <customer#> <statementDate> <dueDate>)
+  bill.statementDate = str([
+    /MEMO\s+\d+\s+([A-Za-z]+ \d+,? \d{4})/i,
+    /STATEMENT DATE\s+([A-Za-z]+ \d+,? \d{4})/i,
+  ]);
+
+  // Due date
+  bill.dueDate = str([
+    /Total Amount Due By ([A-Za-z]+ \d+,? \d{4})/i,
+    /MEMO\s+\d+\s+[A-Za-z]+ \d+,? \d{4}\s+([A-Za-z]+ \d+,? \d{4})/i,
+    /DUE DATE\s+([A-Za-z]+ \d+,? \d{4})/i,
+  ]);
+
+  const dateStr = bill.statementDate || bill.dueDate;
+  bill.sortDate = dateStr ? new Date(dateStr) : new Date(0);
+  bill.monthLabel = bill.sortDate.getFullYear() > 2000
+    ? bill.sortDate.toLocaleDateString('en-CA', { month: 'short', year: '2-digit' })
+    : filename.replace('.pdf','').replace(/[_-]/g,' ');
+
+  // Consumption — extracted text has reading rows as:
+  // "<consumption> <current> <previous> <MMM DD/YY> <ServiceName> Actual ..."
+  const elecM = t.match(/(\d+)\s+\d+\s+\d+\s+[A-Za-z]{3} \d+\/\d+\s+Electric\b/i);
+  bill.electricity = elecM ? parseInt(elecM[1]) : null;
+
+  const coolM = t.match(/(\d+)\s+\d+\s+\d+\s+[A-Za-z]{3} \d+\/\d+\s+Thermal Cool\b/i);
+  bill.thermalCool = coolM ? parseInt(coolM[1]) : 0;
+
+  const heatM = t.match(/(\d+)\s+\d+\s+\d+\s+[A-Za-z]{3} \d+\/\d+\s+Thermal Heat\b/i);
+  bill.thermalHeat = heatM ? parseInt(heatM[1]) : 0;
+
+  const hwM = t.match(/(\d+)\s+\d+\s+\d+\s+[A-Za-z]{3} \d+\/\d+\s+Hot Water\b/i);
+  bill.hotWater = hwM ? parseInt(hwM[1]) : 0;
+
+  // Charges
+  bill.electricityCharges = num([
+    /Your Total Electricity Charges\s*\$?\s*([\d,]+\.?\d*)/i,
+  ]);
+  bill.otherCharges = num([
+    /Your Total Other Utility Charges\s*\$?\s*([\d,]+\.?\d*)/i,
+  ]);
+  bill.hst = num([/\bHST\s+\$?\s*([\d,]+\.?\d*)/i]);
+  bill.oer = num([
+    /Total Ontario Support\s*:\s*\$?\s*([\d,]+\.?\d*)/i,
+    /Ontario Electricity Rebate\s*\(?([\d,]+\.?\d*)/i,
+  ]);
+
+  // Billing period (days appears in reading row after date)
+  const daysM = t.match(/[A-Za-z]{3} \d+\/\d+\s+Electric\s+Actual\s+\S+\s+[A-Za-z]{3} \d+\/\d+\s+(\d+)/i);
+  if (daysM) bill.days = parseInt(daysM[1]);
+  const periodM = t.match(/([A-Za-z]{3} \d+\/\d+)\s+Electric\s+Actual\s+\S+\s+([A-Za-z]{3} \d+\/\d+)/i);
+  if (periodM) { bill.periodFrom = periodM[2]; bill.periodTo = periodM[1]; }
+
+  return bill;
+}
+
+/* ============================================================
+   PROCESSING FLOW
+   ============================================================ */
+async function startProcessing() {
+  show('screen-processing');
+  const pf = document.getElementById('proc-files');
+  pf.innerHTML = queued.map((f, i) => `
+    <div class="proc-file" id="pf${i}">
+      <div class="pf-dot wait" id="dot${i}"></div>
+      <span class="pf-name" id="pfn${i}">${esc(f.name)}</span>
+      <span class="pf-status" id="pfs${i}">Waiting</span>
+    </div>`).join('');
+
+  const results = [], errors = [];
+
+  for (let i = 0; i < queued.length; i++) {
+    const f = queued[i];
+    setDot(i, 'run', '', 'Extracting text…');
+    setProgress(Math.round((i / queued.length) * 75));
+    document.getElementById('proc-sub').textContent = `Processing: ${f.name}`;
+
+    try {
+      const buf = await f.arrayBuffer();
+      const text = await extractPDFText(buf);
+      setDot(i, 'run', '', 'Parsing data…');
+      await tick();
+      const bill = parseBill(text, f.name);
+      if (!bill.total && !bill.electricity) {
+        setDot(i, 'err', '✕', 'Parse failed');
+        errors.push(f.name);
+      } else {
+        setDot(i, 'ok', '✓', bill.total ? `$${bill.total.toFixed(2)}` : 'OK');
+        results.push(bill);
+      }
+    } catch (e) {
+      setDot(i, 'err', '✕', 'Error');
+      errors.push(f.name);
+    }
+    await tick(150);
+  }
+
+  setProgress(100);
+  document.getElementById('proc-sub').textContent = 'Building dashboard…';
+  await tick(500);
+
+  parsed = results;
+  buildDashboard(results, errors);
+  show('screen-dashboard');
+}
+
+function setDot(i, cls, icon, status) {
+  const d = document.getElementById(`dot${i}`);
+  const n = document.getElementById(`pfn${i}`);
+  const s = document.getElementById(`pfs${i}`);
+  d.className = `pf-dot ${cls}`;
+  d.textContent = icon;
+  n.className = `pf-name${cls === 'run' ? ' run' : ''}`;
+  if (s) s.textContent = status;
+}
+function setProgress(p) { document.getElementById('prog-fill').style.width = p + '%'; }
+function tick(ms = 50) { return new Promise(r => setTimeout(r, ms)); }
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+function buildDashboard(bills, errors) {
+  if (!bills.length) {
+    document.getElementById('metrics').innerHTML = `<div class="empty" style="grid-column:1/-1">No bills could be parsed. Please ensure you are uploading Provident eBill PDFs.</div>`;
+    return;
+  }
+
+  bills.sort((a, b) => a.sortDate - b.sortDate);
+
+  // Error banner
+  const ew = document.getElementById('err-wrap');
+  ew.innerHTML = errors.length
+    ? `<div class="err-banner">⚠ Could not fully parse: ${errors.map(esc).join(', ')}</div>` : '';
+
+  // Subtitle
+  const valDates = bills.filter(b => b.statementDate);
+  if (valDates.length >= 2)
+    document.getElementById('dash-sub').textContent =
+      `${valDates[0].statementDate} — ${valDates[valDates.length-1].statementDate}  ·  ${bills.length} billing period${bills.length > 1 ? 's' : ''}`;
+
+  buildMetrics(bills);
+  buildMonthly(bills);
+  buildUsageCharts(bills);
+  buildTable(bills);
+  buildInsights(bills);
+}
+
+/* ---- metrics ---- */
+function buildMetrics(bills) {
+  const totals = bills.filter(b => b.total != null);
+  const sum = totals.reduce((s, b) => s + b.total, 0);
+  const avg = totals.length ? sum / totals.length : 0;
+  const maxB = totals.length ? totals.reduce((a, b) => b.total > a.total ? b : a) : null;
+  const minB = totals.length ? totals.reduce((a, b) => b.total < a.total ? b : a) : null;
+  const oer = bills.reduce((s, b) => s + (b.oer || 0), 0);
+  const elecVals = bills.filter(b => b.electricity).map(b => b.electricity);
+  const elecAvg = elecVals.length ? elecVals.reduce((a, b) => a + b, 0) / elecVals.length : 0;
+  const maxCool = Math.max(...bills.map(b => b.thermalCool || 0), 0);
+  const hst = bills.reduce((s, b) => s + (b.hst || 0), 0);
+
+  document.getElementById('metrics').innerHTML = [
+    mc('Total billed', `$${sum.toFixed(2)}`, `across ${bills.length} bill${bills.length > 1 ? 's' : ''}`),
+    mc('Monthly average', `$${avg.toFixed(2)}`, 'per billing period'),
+    mc('Highest bill', maxB ? `$${maxB.total.toFixed(2)}` : '—', maxB?.monthLabel || ''),
+    mc('Lowest bill', minB ? `$${minB.total.toFixed(2)}` : '—', minB?.monthLabel || ''),
+    mc('Avg electricity', elecVals.length ? `${Math.round(elecAvg)} kWh` : '—', 'per period'),
+    mc('Peak cooling', `${maxCool} ekWh`, 'highest single period'),
+    mc('OER rebate saved', `$${oer.toFixed(2)}`, 'Ontario Electricity Rebate'),
+    mc('HST paid', `$${hst.toFixed(2)}`, `across ${bills.length} period${bills.length > 1 ? 's' : ''}`),
+  ].join('');
+}
+function mc(label, val, sub) {
+  return `<div class="mc"><div class="mc-label">${label}</div><div class="mc-val">${val}</div><div class="mc-sub">${sub}</div></div>`;
+}
+
+/* ---- monthly bar chart ---- */
+function buildMonthly(bills) {
+  const el = document.getElementById('chart-monthly');
+  const b = bills.filter(v => v.total != null);
+  if (!b.length) { el.innerHTML = '<div class="empty">No total data found.</div>'; return; }
+
+  const W = 700, H = 200, PL = 42, PR = 24, PT = 22, PB = 36;
+  const cW = W - PL - PR, cH = H - PT - PB;
+  const maxV = Math.max(...b.map(v => v.total)) * 1.18;
+  const avgV = b.reduce((s, v) => s + v.total, 0) / b.length;
+  const maxT = Math.max(...b.map(v => v.total));
+  const minT = Math.min(...b.map(v => v.total));
+
+  const bW = Math.min(46, (cW / b.length) - 6);
+  let bars = '', lbls = '', amts = '';
+
+  b.forEach((v, i) => {
+    const x = PL + (i + 0.5) * (cW / b.length);
+    const bH = Math.max(2, (v.total / maxV) * cH);
+    const y = PT + cH - bH;
+    const c = v.total === maxT ? '#f85149' : v.total === minT ? '#3fb950' : '#58a6ff';
+    bars += `<rect x="${(x - bW/2).toFixed(1)}" y="${y.toFixed(1)}" width="${bW}" height="${bH.toFixed(1)}" rx="3" fill="${c}" fill-opacity="${v.total === maxT || v.total === minT ? 1 : 0.75}"/>`;
+    amts += `<text x="${x.toFixed(1)}" y="${(y - 4).toFixed(1)}" text-anchor="middle" font-size="10" fill="${c}">$${v.total.toFixed(0)}</text>`;
+    lbls += `<text x="${x.toFixed(1)}" y="${(H - 7).toFixed(1)}" text-anchor="middle" font-size="11" fill="#8b949e">${v.monthLabel}</text>`;
+  });
+
+  // y-axis
+  let yax = '';
+  const steps = [0, 0.25, 0.5, 0.75, 1];
+  steps.forEach(s => {
+    const val = maxV * s, y = PT + cH - s * cH;
+    yax += `<line x1="${PL}" y1="${y.toFixed(1)}" x2="${(W-PR).toFixed(1)}" y2="${y.toFixed(1)}" stroke="#21262d" stroke-width="0.5"/>`;
+    yax += `<text x="${(PL - 5).toFixed(1)}" y="${(y + 4).toFixed(1)}" text-anchor="end" font-size="10" fill="#4b5563">$${Math.round(val)}</text>`;
+  });
+
+  // avg line
+  const ay = PT + cH - (avgV / maxV) * cH;
+  const avgLine = `<line x1="${PL}" y1="${ay.toFixed(1)}" x2="${(W-PR).toFixed(1)}" y2="${ay.toFixed(1)}" stroke="#d29922" stroke-dasharray="5,4" stroke-width="1.2"/>
+    <text x="${(W-PR+3).toFixed(1)}" y="${(ay+4).toFixed(1)}" font-size="10" fill="#d29922">avg</text>`;
+
+  el.innerHTML = `
+    <div class="card-title">Monthly bill total</div>
+    <svg width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Monthly utility bill totals bar chart">
+      ${yax}${bars}${amts}${lbls}${avgLine}
+    </svg>
+    <div class="legend">
+      <div class="leg"><div class="leg-sq" style="background:#f85149"></div>Highest</div>
+      <div class="leg"><div class="leg-sq" style="background:#3fb950"></div>Lowest</div>
+      <div class="leg"><div class="leg-sq" style="background:#58a6ff"></div>Normal</div>
+      <div class="leg"><div class="leg-sq" style="background:#d29922;height:2px;margin-top:4px;border-radius:0;"></div>Avg $${avgV.toFixed(2)}</div>
+    </div>`;
+}
+
+/* ---- electricity line + thermal bar ---- */
+function buildUsageCharts(bills) {
+  document.getElementById('charts-row').innerHTML = elecChart(bills) + thermalChart(bills);
+}
+
+function elecChart(bills) {
+  const b = bills.filter(v => v.electricity != null && v.monthLabel);
+  if (!b.length) return `<div class="card"><div class="empty">No electricity data found.</div></div>`;
+
+  const W = 340, H = 185, PL = 38, PR = 12, PT = 20, PB = 32;
+  const cW = W-PL-PR, cH = H-PT-PB;
+  const vals = b.map(v => v.electricity);
+  const minV = Math.min(...vals) * 0.92, maxV = Math.max(...vals) * 1.08;
+  const range = maxV - minV || 1;
+
+  const pts = b.map((v, i) => [
+    PL + (i / Math.max(b.length - 1, 1)) * cW,
+    PT + cH - ((v.electricity - minV) / range) * cH
+  ]);
+
+  const path = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+  const area = path + ` L${pts[pts.length-1][0].toFixed(1)},${(PT+cH).toFixed(1)} L${pts[0][0].toFixed(1)},${(PT+cH).toFixed(1)} Z`;
+
+  let dots = '', xlbls = '';
+  b.forEach((v, i) => {
+    dots += `<circle cx="${pts[i][0].toFixed(1)}" cy="${pts[i][1].toFixed(1)}" r="3.5" fill="#58a6ff" stroke="#161b22" stroke-width="1.5"/>`;
+    xlbls += `<text x="${pts[i][0].toFixed(1)}" y="${(H-5).toFixed(1)}" text-anchor="middle" font-size="10" fill="#4b5563">${v.monthLabel}</text>`;
+  });
+
+  let yax = '';
+  [[0,'minV'],[0.5,'mid'],[1,'maxV']].forEach(([f]) => {
+    const val = minV + f * range, y = PT + cH - f * cH;
+    yax += `<line x1="${PL}" y1="${y.toFixed(1)}" x2="${(W-PR).toFixed(1)}" y2="${y.toFixed(1)}" stroke="#21262d" stroke-width="0.5"/>`;
+    yax += `<text x="${(PL-4).toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="10" fill="#4b5563">${Math.round(val)}</text>`;
+  });
+
+  return `<div class="card">
+    <div class="card-title">Electricity usage</div>
+    <div class="card-sub">kWh per billing period</div>
+    <svg width="100%" viewBox="0 0 ${W} ${H}" role="img" aria-label="Electricity usage over time">
+      ${yax}
+      <path d="${area}" fill="#58a6ff" fill-opacity="0.07"/>
+      <path d="${path}" fill="none" stroke="#58a6ff" stroke-width="2"/>
+      ${dots}${xlbls}
+    </svg>
+  </div>`;
+}
+
+function thermalChart(bills) {
+  const hasAny = bills.some(b => (b.thermalCool || 0) + (b.thermalHeat || 0) > 0);
+  if (!hasAny) return `<div class="card"><div class="empty">No thermal cooling or heating data found.</div></div>`;
+
+  const W = 340, H = 185, PL = 42, PR = 12, PT = 20, PB = 32;
+  const cW = W-PL-PR, cH = H-PT-PB;
+  const maxV = Math.max(...bills.map(b => Math.max(b.thermalCool||0, b.thermalHeat||0)), 1) * 1.15;
+
+  const bW = Math.min(26, (cW / bills.length) - 5);
+  let coolBars = '', heatBars = '', xlbls = '';
+
+  bills.forEach((b, i) => {
+    const x = PL + (i + 0.5) * (cW / bills.length);
+    xlbls += `<text x="${x.toFixed(1)}" y="${(H-5).toFixed(1)}" text-anchor="middle" font-size="10" fill="#4b5563">${b.monthLabel||''}</text>`;
+    if ((b.thermalCool||0) > 0) {
+      const h = ((b.thermalCool) / maxV) * cH;
+      coolBars += `<rect x="${(x-bW/2).toFixed(1)}" y="${(PT+cH-h).toFixed(1)}" width="${bW}" height="${h.toFixed(1)}" rx="2" fill="#f78166" fill-opacity="0.85"/>`;
+      coolBars += `<text x="${x.toFixed(1)}" y="${(PT+cH-h-3).toFixed(1)}" text-anchor="middle" font-size="9" fill="#f78166">${b.thermalCool}</text>`;
+    }
+    if ((b.thermalHeat||0) > 0) {
+      const h = ((b.thermalHeat) / maxV) * cH;
+      heatBars += `<rect x="${(x-bW/2).toFixed(1)}" y="${(PT+cH-h).toFixed(1)}" width="${bW}" height="${h.toFixed(1)}" rx="2" fill="#a5a0fb" fill-opacity="0.85"/>`;
+      heatBars += `<text x="${x.toFixed(1)}" y="${(PT+cH-h-3).toFixed(1)}" text-anchor="middle" font-size="9" fill="#a5a0fb">${b.thermalHeat}</text>`;
+    }
+  });
+
+  let yax = '';
+  [0, 0.5, 1].forEach(f => {
+    const val = maxV * f, y = PT + cH - f * cH;
+    yax += `<line x1="${PL}" y1="${y.toFixed(1)}" x2="${(W-PR).toFixed(1)}" y2="${y.toFixed(1)}" stroke="#21262d" stroke-width="0.5"/>`;
+    yax += `<text x="${(PL-4).toFixed(1)}" y="${(y+4).toFixed(1)}" text-anchor="end" font-size="10" fill="#4b5563">${Math.round(val)}</text>`;
+  });
+
+  return `<div class="card">
+    <div class="card-title">Thermal usage</div>
+    <div class="card-sub">ekWh per billing period</div>
+    <svg width="100%" viewBox="0 0 ${W} ${H}" role="img" aria-label="Thermal usage bar chart">
+      ${yax}${coolBars}${heatBars}${xlbls}
+    </svg>
+    <div class="legend">
+      <div class="leg"><div class="leg-sq" style="background:#f78166"></div>Cooling (ekWh)</div>
+      <div class="leg"><div class="leg-sq" style="background:#a5a0fb"></div>Heating (ekWh)</div>
+    </div>
+  </div>`;
+}
+
+/* ---- data table ---- */
+function buildTable(bills) {
+  const maxT = Math.max(...bills.filter(b => b.total).map(b => b.total));
+  const minT = Math.min(...bills.filter(b => b.total).map(b => b.total));
+
+  const rows = bills.map(b => {
+    const cls = b.total === maxT ? ' class="peak"' : b.total === minT ? ' class="low"' : '';
+    return `<tr${cls}>
+      <td>${esc(b.monthLabel||'?')}</td>
+      <td>${esc(b.periodFrom||'')} ${b.periodFrom ? '→' : ''} ${esc(b.periodTo||'')}</td>
+      <td class="r">${b.electricity ?? '—'}</td>
+      <td class="r">${b.thermalCool || 0}</td>
+      <td class="r">${b.thermalHeat || 0}</td>
+      <td class="r">${b.hotWater ?? '—'}</td>
+      <td class="r">${b.electricityCharges != null ? '$'+b.electricityCharges.toFixed(2) : '—'}</td>
+      <td class="r">${b.otherCharges != null ? '$'+b.otherCharges.toFixed(2) : '—'}</td>
+      <td class="r">${b.hst != null ? '$'+b.hst.toFixed(2) : '—'}</td>
+      <td class="r"><strong>${b.total != null ? '$'+b.total.toFixed(2) : '—'}</strong></td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('tbl-card').innerHTML = `
+    <div class="card-title">Bill-by-bill breakdown</div>
+    <div class="tbl-wrap"><table>
+      <thead><tr>
+        <th>Period</th><th>Reading dates</th>
+        <th class="r">Elec (kWh)</th><th class="r">T.Cool</th><th class="r">T.Heat</th>
+        <th class="r">H₂O (m³)</th><th class="r">Elec $</th><th class="r">Other $</th>
+        <th class="r">HST</th><th class="r">Total</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <div class="legend" style="margin-top:.6rem">
+      <div class="leg"><div class="leg-sq" style="background:#f85149"></div>Highest bill</div>
+      <div class="leg"><div class="leg-sq" style="background:#3fb950"></div>Lowest bill</div>
+    </div>`;
+}
+
+/* ---- insights ---- */
+function buildInsights(bills) {
+  const ins = [];
+  const totals = bills.filter(b => b.total != null);
+  if (!totals.length) return;
+
+  const sum = totals.reduce((s, b) => s + b.total, 0);
+  const avgT = sum / totals.length;
+  const maxB = totals.reduce((a, b) => b.total > a.total ? b : a);
+  const minB = totals.reduce((a, b) => b.total < a.total ? b : a);
+  const oer = bills.reduce((s, b) => s + (b.oer || 0), 0);
+  const elecVals = bills.filter(b => b.electricity).map(b => b.electricity);
+  const elecAvg = elecVals.length ? Math.round(elecVals.reduce((a,b)=>a+b,0)/elecVals.length) : 0;
+  const elecRange = elecVals.length > 1 ? Math.max(...elecVals) - Math.min(...elecVals) : 0;
+  const coolingPds = bills.filter(b => (b.thermalCool || 0) > 50);
+  const heatingPds = bills.filter(b => (b.thermalHeat || 0) > 0);
+  const peakCool = coolingPds.length ? coolingPds.reduce((a, b) => (b.thermalCool||0) > (a.thermalCool||0) ? b : a) : null;
+  const totalCool = bills.reduce((s, b) => s + (b.thermalCool||0), 0);
+
+  // Insight 1: Primary cost driver
+  if (coolingPds.length > 0) {
+    ins.push({ c: '#f85149', t: `<strong>Thermal cooling is your primary cost driver.</strong> Across ${coolingPds.length} billing period${coolingPds.length>1?'s':''}, cooling usage totalled ${totalCool} ekWh and directly caused your bills to spike — peaking at ${peakCool?.thermalCool||0} ekWh during ${peakCool?.monthLabel||'summer'}. When cooling shuts off, your bill drops by up to <strong>$${(maxB.total - minB.total).toFixed(2)}</strong>.` });
+  } else if (heatingPds.length > 0) {
+    ins.push({ c: '#a5a0fb', t: `<strong>Thermal heating is the main variable cost in these bills.</strong> Heat started in ${heatingPds[0]?.monthLabel}, adding to your baseline. Expect costs to peak in the coldest months.` });
+  }
+
+  // Insight 2: Electricity stability
+  if (elecVals.length > 1) {
+    if (elecRange <= 15) {
+      ins.push({ c: '#3fb950', t: `<strong>Your electricity usage is very stable</strong> — it ranges only ${Math.min(...elecVals)}–${Math.max(...elecVals)} kWh across all periods (avg ${elecAvg} kWh). This reflects consistent appliance habits. There's no obvious electricity waste to address.` });
+    } else {
+      ins.push({ c: '#d29922', t: `<strong>Electricity consumption varies by ${elecRange} kWh</strong> across your bills (avg ${elecAvg} kWh). Investigate the higher-consumption months to see if any appliances or habits changed.` });
+    }
+  }
+
+  // Insight 3: OER
+  if (oer > 0) {
+    ins.push({ c: '#58a6ff', t: `<strong>The Ontario Electricity Rebate saved you $${oer.toFixed(2)}</strong> across these bills (avg $${(oer/bills.length).toFixed(2)}/month). This rate adjusts quarterly — check <em>ontario.ca/yourelectricitybill</em> to confirm your current rebate rate.` });
+  }
+
+  // Insight 4: Seasonal pattern
+  if (coolingPds.length > 0 && heatingPds.length > 0) {
+    ins.push({ c: '#a5a0fb', t: `<strong>A clear seasonal pattern is visible.</strong> Summer: cooling dominates costs. Late fall/winter: heating takes over. The shoulder season (when neither system runs) is consistently your cheapest period — aim to upload those bills to confirm.` });
+  } else if (coolingPds.length > 0 && !heatingPds.length) {
+    ins.push({ c: '#f78166', t: `<strong>Only cooling months are visible in these bills.</strong> Once outdoor temperatures drop and the cooling system shuts down, your bill falls significantly (as seen in the lowest bill: $${minB.total.toFixed(2)}). Upload winter bills to see the heating side of the cycle.` });
+  }
+
+  // Insight 5: Budget projection
+  if (totals.length >= 3) {
+    const proj = avgT * 12;
+    ins.push({ c: '#d29922', t: `<strong>Estimated annual utility spend: ~$${proj.toFixed(0)}.</strong> Based on ${totals.length} bills averaging $${avgT.toFixed(2)}/month. This may be conservative if winter heating bills aren't yet included.` });
+  }
+
+  // Insight 6: Peak advice
+  if (maxB && coolingPds.length > 0) {
+    ins.push({ c: '#58a6ff', t: `<strong>Your peak month (${maxB.monthLabel}, $${maxB.total.toFixed(2)}) is driven by thermal cooling,</strong> not electricity. Since this is a central building system, your ability to reduce it is limited — but keeping windows closed and blinds drawn during peak heat reduces the cooling load the system has to compensate for.` });
+  }
+
+  // Insight 7: Hot water
+  const hwVals = bills.filter(b => b.hotWater != null && b.hotWater > 0);
+  if (hwVals.length) {
+    const hwAvg = (hwVals.reduce((s,b)=>s+(b.hotWater||0),0)/hwVals.length).toFixed(1);
+    ins.push({ c: '#39d353', t: `<strong>Hot water usage is low and stable</strong> at ~${hwAvg} m³/period. This is a small, predictable cost. Any sudden spike (e.g. 3× normal) could indicate a fixture leak and is worth investigating.` });
+  }
+
+  document.getElementById('insights-card').innerHTML = `
+    <div class="card-title">💡 Insights &amp; recommendations</div>
+    <div class="insights-wrap">
+      ${ins.map(i => `<div class="insight"><div class="i-dot" style="background:${i.c}"></div><div class="i-text">${i.t}</div></div>`).join('')}
+    </div>`;
+}
+
+/* ============================================================
+   UTILS
+   ============================================================ */
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
