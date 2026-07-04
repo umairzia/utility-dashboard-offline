@@ -37,7 +37,7 @@ No `pdf.js`, no CDN, no build step. Just open the file.
 
 ## Usage
 
-1. Download `utility-dashboard.html`
+1. Download `utility-dashboard_v2.html`
 2. Open it in any modern browser (Chrome, Edge, Firefox, Safari)
 3. Drag in your Provident eBill PDFs (or click to browse)
 4. Click **Ready to begin?**
